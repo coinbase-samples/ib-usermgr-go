@@ -22,7 +22,6 @@ func main() {
 	fmt.Println("starting app with config", app)
 	config.LogInit(app)
 
-	logrusLogger.SetFormatter(&log.JSONFormatter{})
 	//setup cognito client
 	cip := InitAuth(&app)
 	aw := authMiddleware{cip} //setup dynamodb connection
