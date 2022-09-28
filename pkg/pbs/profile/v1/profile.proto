@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "validate/validate.proto";
 
-option go_package = "github.com/coinbase-samples/ib-usermgr-go/pkg/pbs/v1";
+option go_package = "github.com/coinbase-samples/ib-usermgr-go/pkg/pbs/profile/v1";
 
 message ReadProfileRequest {
   string id = 1 [(validate.rules).string.len = 36];
