@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"time"
@@ -120,24 +121,24 @@ func gRPCListen(app config.AppConfig, aw authMiddleware) {
 
 	}()
 
+	var gwServer *http.Server
 	if app.IsLocalEnv() {
-
-		gwServer, err := setupHttp(app, s)
+		gwServer, err = setupHttp(app, s)
 		if err != nil {
 			logrusLogger.Warnln("issues setting up http server", err)
 		}
+	}
 
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
 
-		<-c
+	<-c
 
-		ctx, cancel := context.WithTimeout(context.Background(), wait)
-		defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), wait)
+	defer cancel()
 
-		if gwServer != nil {
-			gwServer.Shutdown(ctx)
-		}
+	if gwServer != nil {
+		gwServer.Shutdown(ctx)
 	}
 
 	// Optionally, you could run srv.Shutdown in a goroutine and block on
