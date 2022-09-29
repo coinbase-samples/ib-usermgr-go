@@ -116,7 +116,7 @@ func gRPCListen(app config.AppConfig, aw authMiddleware) {
 	fmt.Printf("gRPC Server starting on port %s\n", activePort)
 	go func() {
 		if err := s.Serve(lis); err != nil {
-			fmt.Printf("Failed to listen for gRPC: %v", err)
+			log.Fatalf("Failed to listen for gRPC: %v", err)
 		}
 	}()
 
