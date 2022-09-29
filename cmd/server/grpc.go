@@ -47,7 +47,10 @@ func gRPCListen(app config.AppConfig, aw authMiddleware) {
 	}()
 
 	// if local export both grpc and http endpoints
-	activePort := app.GrpcPort
+	activePort := app.Port
+	if app.Env == "local" {
+		activePort = app.GrpcPort
+	}
 
 	//setup conn
 
