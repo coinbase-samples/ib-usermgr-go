@@ -48,7 +48,7 @@ func gRPCListen(app config.AppConfig, aw authMiddleware) {
 
 	// if local export both grpc and http endpoints
 	activePort := app.Port
-	if app.Env == "local" {
+	if app.IsLocalEnv() {
 		activePort = app.GrpcPort
 	}
 
@@ -120,21 +120,24 @@ func gRPCListen(app config.AppConfig, aw authMiddleware) {
 
 	}()
 
-	gwServer, err := setupHttp(app, s)
-	if err != nil {
-		logrusLogger.Warnln("issues setting up http server", err)
-	}
+	if app.IsLocalEnv() {
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+		gwServer, err := setupHttp(app, s)
+		if err != nil {
+			logrusLogger.Warnln("issues setting up http server", err)
+		}
 
-	<-c
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt)
 
-	ctx, cancel := context.WithTimeout(context.Background(), wait)
-	defer cancel()
+		<-c
 
-	if gwServer != nil {
-		gwServer.Shutdown(ctx)
+		ctx, cancel := context.WithTimeout(context.Background(), wait)
+		defer cancel()
+
+		if gwServer != nil {
+			gwServer.Shutdown(ctx)
+		}
 	}
 
 	// Optionally, you could run srv.Shutdown in a goroutine and block on
