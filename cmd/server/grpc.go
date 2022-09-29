@@ -118,7 +118,6 @@ func gRPCListen(app config.AppConfig, aw authMiddleware) {
 		if err := s.Serve(lis); err != nil {
 			fmt.Printf("Failed to listen for gRPC: %v", err)
 		}
-
 	}()
 
 	var gwServer *http.Server
