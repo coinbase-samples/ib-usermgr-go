@@ -8,6 +8,7 @@ import (
 	"github.com/coinbase-samples/ib-usermgr-go/model"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
@@ -18,6 +19,8 @@ type authMiddleware struct {
 func (am *authMiddleware) InterceptorNew() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		// allow health checks to pass through
+		log.Warnf("Received path: %s", info.FullMethod)
+
 		if info.FullMethod == "/grpc.health.v1.Health/Check" || info.FullMethod == "/grpc.health.v1.Health/Watch" {
 
 			return handler(ctx, req)
