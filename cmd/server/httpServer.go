@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -13,6 +14,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
@@ -24,11 +26,22 @@ func getProfileConnAddress(app config.AppConfig) string {
 	return fmt.Sprintf("%s:%s", "api-internal-dev.neoworks.xyz", app.GrpcPort)
 }
 
+func getGrpcCredentials(app config.AppConfig) credentials.TransportCredentials {
+	if app.IsLocalEnv() {
+		return insecure.NewCredentials()
+	} else {
+		return credentials.NewTLS(&tls.Config{
+			InsecureSkipVerify: true,
+		})
+	}
+}
+
 func testProfileDial(app config.AppConfig) {
 	dialProfileConn := getProfileConnAddress(app)
+	grpcCreds := getGrpcCredentials(app)
 	grpc.EnableTracing = true
 
-	conn, err := grpc.Dial(dialProfileConn, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(dialProfileConn, grpc.WithTransportCredentials(grpcCreds))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

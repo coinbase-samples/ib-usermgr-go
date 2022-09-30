@@ -1,6 +1,7 @@
 package config
 
 import (
+	xray "contrib.go.opencensus.io/exporter/aws"
 	"go.opentelemetry.io/otel"
 	stdout "go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
@@ -19,12 +20,19 @@ func Init(app AppConfig) (*sdktrace.TracerProvider, error) {
 		}
 		sampler = sdktrace.AlwaysSample()
 	} else {
-		//swap out for xray exporter in future
-		exporter, err = stdout.New()
+		exporter, err := xray.NewExporter(
+			xray.WithVersion("latest"),
+			// Add your AWS region.
+			xray.WithRegion(app.Region),
+		)
 		if err != nil {
+			// Handle any error.
 			return nil, err
 		}
-		sampler = sdktrace.NeverSample()
+		// Do not forget to call Flush() before the application terminates.
+		defer exporter.Flush()
+
+		sampler = sdktrace.AlwaysSample()
 	}
 
 	tp := sdktrace.NewTracerProvider(

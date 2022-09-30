@@ -21,15 +21,15 @@ func (o *ProfileServer) ReadProfile(ctx context.Context, req *profile.ReadProfil
 	l := ctxlogrus.Extract(ctx)
 	authedUser := ctx.Value(model.UserCtxKey).(model.User)
 	if err := req.Validate(); err != nil {
-		l.Debugln("invalid request", err)
+		l.Debugln("invalid read profile request", err)
 		return nil, err
 	}
-	l.Debugln("starting trace")
+	l.Debugln("starting read profile trace")
 	_, span := o.Tracer.Start(ctx, "readProfile",
 		trace.WithAttributes(attribute.String("UserId", authedUser.Id)))
 	defer span.End()
 
-	l.Warnf("fetching user - %s - %s", authedUser.Id, req.Id)
+	l.Debugf("fetching user - %s - %s", authedUser.Id, req.Id)
 	body, err := dba.Repo.ReadProfile(authedUser.Id)
 
 	if err != nil {
@@ -45,10 +45,10 @@ func (o *ProfileServer) UpdateProfile(ctx context.Context, req *profile.UpdatePr
 	l := ctxlogrus.Extract(ctx)
 	authedUser := ctx.Value(model.UserCtxKey).(model.User)
 	if err := req.Validate(); err != nil {
-		l.Debugln("invalid request", err)
+		l.Debugln("invalid update profile request", err)
 		return nil, err
 	}
-	l.Debugln("starting trace")
+	l.Debugln("starting update profile trace")
 	_, span := o.Tracer.Start(ctx, "updateProfile",
 		trace.WithAttributes(attribute.String("UserId", authedUser.Id)))
 	defer span.End()
