@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/coinbase-samples/ib-usermgr-go/config"
 )
@@ -34,7 +36,25 @@ func NewDBA(r *Repository) {
 }
 
 func setupService(app *config.AppConfig) *dynamodb.Client {
-	cfg, err := awsConfig.LoadDefaultConfig(context.TODO())
+	var cfg aws.Config
+	var err error
+	if app.IsLocalEnv() {
+		cfg, err = awsConfig.LoadDefaultConfig(context.TODO(),
+			awsConfig.WithRegion(app.Region),
+			awsConfig.WithEndpointResolver(aws.EndpointResolverFunc(
+				func(service, region string) (aws.Endpoint, error) {
+					return aws.Endpoint{URL: app.DatabaseEndpoint}, nil
+				})),
+			awsConfig.WithCredentialsProvider(credentials.StaticCredentialsProvider{
+				Value: aws.Credentials{
+					AccessKeyID: "dummy", SecretAccessKey: "dummy", SessionToken: "dummy",
+					Source: "Hard-coded credentials; values are irrelevant for local DynamoDB",
+				},
+			}),
+		)
+	} else {
+		cfg, err = awsConfig.LoadDefaultConfig(context.TODO())
+	}
 	if err != nil {
 		// TODO: should handle retries and health statuses
 		fmt.Println("error creating dynamo config", err)

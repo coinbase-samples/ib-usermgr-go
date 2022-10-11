@@ -104,8 +104,7 @@ func setupHttp(app config.AppConfig, grpcServer *grpc.Server) (*http.Server, err
 
 	// Register Service Handlers
 	err = v1.RegisterProfileServiceHandler(context.Background(), gwmux, pConn)
-	//dopts := []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}
-	//err = v1.RegisterProfileServiceHandlerFromEndpoint(context.Background(), gwmux, "localhost:8443", dopts)
+
 	if err != nil {
 		logrusLogger.Fatalln("Failed to register profile:", err)
 	}
