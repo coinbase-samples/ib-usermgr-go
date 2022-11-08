@@ -28,10 +28,9 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-func gRPCListen(app config.AppConfig, aw authMiddleware) {
+func gRPCListen(app config.AppConfig, aw authMiddleware, logrusLogger *log.Entry) {
 	tracer := otel.Tracer("ib-usermgr-go")
-	logLevel, _ := log.ParseLevel(app.LogLevel)
-	logrusLogger.SetLevel(logLevel)
+
 	//setup otel
 	tp, err := config.Init(app)
 	logrusLogger.Debugln("Started otel", tp)
@@ -60,13 +59,21 @@ func gRPCListen(app config.AppConfig, aw authMiddleware) {
 
 	// Logrus entry is used, allowing pre-definition of certain fields by the user.
 	// See example setup here https://github.com/grpc-ecosystem/go-grpc-middleware/blob/master/logging/logrus/examples_test.go
-	logrusEntry := log.NewEntry(logrusLogger)
+
 	opts := []grpc_logrus.Option{
 		grpc_logrus.WithDurationField(func(duration time.Duration) (key string, value interface{}) {
 			return "grpc.time_ns", duration.Nanoseconds()
 		}),
+		grpc_logrus.WithDecider(func(fullMethodName string, err error) bool {
+			// will not log gRPC calls if it was a call to healthcheck and no error was raised
+			if err == nil && fullMethodName == "/grpc.health.v1.Health/Check" {
+				return false
+			}
+
+			// by default everything will be logged
+			return true
+		}),
 	}
-	grpc_logrus.ReplaceGrpcLogger(logrusEntry)
 
 	var s *grpc.Server
 
@@ -81,7 +88,7 @@ func gRPCListen(app config.AppConfig, aw authMiddleware) {
 			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 				grpc_ctxtags.UnaryServerInterceptor(),
 				otelgrpc.UnaryServerInterceptor(),
-				grpc_logrus.UnaryServerInterceptor(logrusEntry, opts...),
+				grpc_logrus.UnaryServerInterceptor(logrusLogger, opts...),
 				aw.InterceptorNew(),
 				grpc_validator.UnaryServerInterceptor(),
 				grpc_recovery.UnaryServerInterceptor(),
@@ -94,7 +101,7 @@ func gRPCListen(app config.AppConfig, aw authMiddleware) {
 			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 				grpc_ctxtags.UnaryServerInterceptor(),
 				otelgrpc.UnaryServerInterceptor(),
-				grpc_logrus.UnaryServerInterceptor(logrusEntry, opts...),
+				grpc_logrus.UnaryServerInterceptor(logrusLogger, opts...),
 				aw.InterceptorNew(),
 				grpc_validator.UnaryServerInterceptor(),
 				grpc_recovery.UnaryServerInterceptor(),
@@ -120,9 +127,9 @@ func gRPCListen(app config.AppConfig, aw authMiddleware) {
 
 	var gwServer *http.Server
 	if app.IsLocalEnv() {
-		gwServer, err = setupHttp(app, s)
+		gwServer, err = setupHttp(app, s, logrusLogger)
 		if err != nil {
-			logrusLogger.Warnln("issues setting up http server", err)
+			logrusLogger.Errorln("issues setting up http server", err)
 		}
 	}
 

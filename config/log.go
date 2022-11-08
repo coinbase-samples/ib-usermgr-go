@@ -6,10 +6,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func LogInit(app AppConfig) {
+func LogInit(app AppConfig) *log.Entry {
+	logger := log.New()
 	logLevel, _ := log.ParseLevel(app.LogLevel)
-	log.SetLevel(logLevel)
-	log.SetFormatter(&log.JSONFormatter{})
-	log.SetReportCaller(true)
-	log.SetOutput(os.Stdout)
+	logger.SetLevel(logLevel)
+	logger.SetFormatter(&log.JSONFormatter{})
+	logger.SetReportCaller(true)
+	logger.SetOutput(os.Stdout)
+	return log.NewEntry(logger)
 }
