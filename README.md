@@ -1,6 +1,6 @@
 ### User Manager
 
-This is the application code and SQL for the User Manager implementation.
+This is the application code for the User Manager implementation.
 
 ### Local Environment Setup
 

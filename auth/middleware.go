@@ -18,6 +18,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/aws"
@@ -47,7 +48,8 @@ func (am *Middleware) InterceptorNew() grpc.UnaryServerInterceptor {
 		token, err := grpc_auth.AuthFromMD(ctx, "bearer")
 		l.Debugf("checking token, method: %s token: %s", info.FullMethod, token)
 		if err != nil {
-			return nil, err
+			l.Debugf("no bearer token in metadata - %v", err)
+			return nil, fmt.Errorf("could not find bearer token from metadata: %w", err)
 		}
 
 		user, err := am.Cip.GetUser(ctx, &cognitoidentityprovider.GetUserInput{
@@ -55,7 +57,7 @@ func (am *Middleware) InterceptorNew() grpc.UnaryServerInterceptor {
 		})
 		if err != nil {
 			l.Debugf("could not validate token - %v", err)
-			return nil, err
+			return nil, fmt.Errorf("could not validate token: %w", err)
 		}
 
 		ctx = addUserToContext(ctx, user, l)

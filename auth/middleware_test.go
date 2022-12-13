@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -15,7 +16,11 @@ import (
 
 type MockCognito struct{}
 
-func (m *MockCognito) GetUser(ctx context.Context, params *cognitoidentityprovider.GetUserInput, optFns ...func(*cognitoidentityprovider.Options)) (*cognitoidentityprovider.GetUserOutput, error) {
+func (m *MockCognito) GetUser(
+	ctx context.Context,
+	params *cognitoidentityprovider.GetUserInput,
+	optFns ...func(*cognitoidentityprovider.Options),
+) (*cognitoidentityprovider.GetUserOutput, error) {
 	token, _ := grpc_auth.AuthFromMD(ctx, "bearer")
 	if token == "goodToken" {
 		return &cognitoidentityprovider.GetUserOutput{
@@ -112,7 +117,7 @@ func TestMiddlewareBadUserContext(t *testing.T) {
 		},
 	)
 
-	if err.Error() != "Request unauthenticated with bearer" {
+	if !strings.Contains(err.Error(), "Request unauthenticated with bearer") {
 		t.Fatal("expected error with badToken")
 	}
 	if resp != nil {

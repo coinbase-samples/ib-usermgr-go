@@ -18,6 +18,7 @@ package dba
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -37,12 +38,12 @@ func (m *DynamoRepository) ReadProfile(id string) (model.ProfileResponse, error)
 	})
 
 	if err != nil {
-		return profile, err
+		return profile, fmt.Errorf("dynamodb could not getItem: %w", err)
 	}
 
 	err = attributevalue.UnmarshalMap(out.Item, &profile)
 	if err != nil {
-		return profile, err
+		return profile, fmt.Errorf("could not unmarshal item: %w", err)
 	}
 
 	return profile, nil
@@ -54,16 +55,14 @@ func (m *DynamoRepository) UpdateProfile(id string, updateBody model.UpdateProfi
 	updateItem, err := attributevalue.MarshalMap(updateBody)
 
 	if err != nil {
-		return profile, err
+		return profile, fmt.Errorf("could not marshal update request body: %w", err)
 	}
 
-	_, err = m.Svc.PutItem(context.TODO(), &dynamodb.PutItemInput{
+	if _, err = m.Svc.PutItem(context.TODO(), &dynamodb.PutItemInput{
 		TableName: aws.String(m.App.ProfileTableName),
 		Item:      updateItem,
-	})
-
-	if err != nil {
-		return profile, err
+	}); err != nil {
+		return profile, fmt.Errorf("dynamodb could not putItem: %w", err)
 	}
 
 	profile = model.ProfileResponse(updateBody)

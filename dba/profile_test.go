@@ -53,11 +53,11 @@ func TestReadProfileNotFound(t *testing.T) {
 
 	resp, err := repo.ReadProfile(ReadProfileNotFound)
 
-	if resp.Name != "" {
+	if len(resp.Name) > 0 {
 		t.Fatal("expected empty name")
 	}
 
-	if resp.UserId != "" {
+	if len(resp.UserId) > 0 {
 		t.Fatal("expected userId to be empty")
 	}
 
@@ -97,11 +97,11 @@ func TestUpdateProfileNotFound(t *testing.T) {
 		Name:   "Bob Ross",
 	})
 
-	if resp.Name != "" {
+	if len(resp.Name) > 0 {
 		t.Fatal("expected empty name")
 	}
 
-	if resp.UserId != "" {
+	if len(resp.UserId) > 0 {
 		t.Fatal("expected userId to be empty")
 	}
 

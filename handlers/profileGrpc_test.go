@@ -18,6 +18,7 @@ package handlers
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -120,7 +121,7 @@ func TestReadHandlerInvalidId(t *testing.T) {
 	}
 
 	validationError := "invalid ReadProfileRequest.Id: value length must be 36 runes"
-	if err.Error() != validationError {
+	if !strings.Contains(err.Error(), validationError) {
 		t.Fatalf("incorrect validation, expected - %s got - %s", validationError, err)
 	}
 
@@ -198,7 +199,7 @@ func TestUpdateHandlerEmailError(t *testing.T) {
 	})
 
 	emailError := "invalid UpdateProfileRequest.Email: value must be a valid email address | caused by: mail: missing '@' or angle-addr"
-	if err.Error() != emailError {
+	if !strings.Contains(err.Error(), emailError) {
 		t.Fatalf("incorrect validation, expected - %s got - %s", emailError, err)
 	}
 

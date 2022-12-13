@@ -72,7 +72,7 @@ func TestNewDBA(t *testing.T) {
 
 	NewDBA(repo)
 
-	if Repo.App.Env != "local" {
+	if !Repo.App.IsLocalEnv() {
 		t.Fatal("config not set on repo")
 	}
 

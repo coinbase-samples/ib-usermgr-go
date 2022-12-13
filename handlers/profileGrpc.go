@@ -19,6 +19,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/coinbase-samples/ib-usermgr-go/conversions"
 	"github.com/coinbase-samples/ib-usermgr-go/dba"
@@ -36,7 +37,7 @@ func (o *ProfileServer) ReadProfile(ctx context.Context, req *profile.ReadProfil
 	authedUser := ctx.Value(model.UserCtxKey).(model.User)
 	if err := req.ValidateAll(); err != nil {
 		l.Debugln("invalid read profile request", err)
-		return nil, err
+		return nil, fmt.Errorf("profile handler could not validate request: %w", err)
 	}
 
 	l.Debugf("fetching user - %s - %s", authedUser.Id, req.Id)
@@ -44,6 +45,7 @@ func (o *ProfileServer) ReadProfile(ctx context.Context, req *profile.ReadProfil
 
 	if err != nil {
 		l.Debugln("error reading profile with dynamo", err)
+		return nil, fmt.Errorf("profile handler could not read profile: %w", err)
 	}
 
 	response := conversions.ConvertReadProfileToProto(body)
@@ -57,7 +59,7 @@ func (o *ProfileServer) UpdateProfile(ctx context.Context, req *profile.UpdatePr
 	authedUser := ctx.Value(model.UserCtxKey).(model.User)
 	if err := req.ValidateAll(); err != nil {
 		l.Debugln("invalid update profile request", err)
-		return nil, err
+		return nil, fmt.Errorf("profile handler could not validate request: %w", err)
 	}
 
 	updateBody := conversions.ConvertUpdateProfileToModel(req)
@@ -67,6 +69,7 @@ func (o *ProfileServer) UpdateProfile(ctx context.Context, req *profile.UpdatePr
 
 	if err != nil {
 		l.Debugln("error updating profile with dynamo", err)
+		return nil, fmt.Errorf("profile handler could not update profile: %w", err)
 	}
 
 	response := conversions.ConvertUpdateProfileToProto(body)
