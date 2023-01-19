@@ -22,12 +22,25 @@ import (
 	"github.com/spf13/viper"
 )
 
+// TODO move to util pkg
+type BaseConfig struct {
+	Env       string `mapstructure:"ENV_NAME"`
+	LogLevel  string `mapstructure:"LOG_LEVEL"`
+	LogToFile string `mapstructure:"LOG_TO_FILE"`
+	Region    string `mapstructure:"REGION"`
+	Port      string `mapstructure:"PORT"`
+	GrpcPort  string `mapstructure:"GRPC_PORT"`
+}
+
+func UnmarshalBase(b *BaseConfig) {
+	err := viper.Unmarshal(&b)
+	if err != nil {
+		fmt.Printf("Cannot parse env file %v\n", err)
+	}
+}
+
 type AppConfig struct {
-	Env              string `mapstructure:"ENV_NAME"`
-	LogLevel         string `mapstructure:"LOG_LEVEL"`
-	Region           string `mapstructure:"AWS_REGION"`
-	Port             string `mapstructure:"PORT"`
-	GrpcPort         string `mapstructure:"GRPC_PORT"`
+	BaseConfig
 	ClientId         string `mapstructure:"COGNITO_APP_CLIENT_ID"`
 	UserPoolId       string `mapstructure:"COGNITO_USER_POOL_ID"`
 	DatabaseEndpoint string `mapstructure:"DB_ENDPOINT"`
@@ -68,4 +81,5 @@ func Setup(app *AppConfig) {
 	if err != nil {
 		fmt.Printf("Cannot parse env file %v\n", err)
 	}
+	UnmarshalBase(&app.BaseConfig)
 }

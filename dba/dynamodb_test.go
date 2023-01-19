@@ -26,7 +26,9 @@ import (
 
 func TestSetup(t *testing.T) {
 	app := config.AppConfig{
-		Env:              "local",
+		BaseConfig: config.BaseConfig{
+			Env: "local",
+		},
 		DatabaseEndpoint: "http://localhost:4566",
 	}
 	cfg, _ := awsConfig.LoadDefaultConfig(context.Background())
@@ -44,7 +46,9 @@ func TestSetup(t *testing.T) {
 
 func TestStageSetup(t *testing.T) {
 	app := config.AppConfig{
-		Env:              "stage",
+		BaseConfig: config.BaseConfig{
+			Env: "stage",
+		},
 		DatabaseEndpoint: "http://localhost:4566",
 	}
 	cfg, _ := awsConfig.LoadDefaultConfig(context.Background())
@@ -62,7 +66,9 @@ func TestStageSetup(t *testing.T) {
 
 func TestNewDBA(t *testing.T) {
 	app := config.AppConfig{
-		Env:              "local",
+		BaseConfig: config.BaseConfig{
+			Env: "local",
+		},
 		DatabaseEndpoint: "http://localhost:4566",
 	}
 	repo := &DynamoRepository{

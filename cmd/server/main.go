@@ -24,6 +24,7 @@ import (
 	"github.com/coinbase-samples/ib-usermgr-go/auth"
 	"github.com/coinbase-samples/ib-usermgr-go/config"
 	"github.com/coinbase-samples/ib-usermgr-go/dba"
+	"github.com/coinbase-samples/ib-usermgr-go/log"
 )
 
 var (
@@ -34,8 +35,8 @@ func main() {
 	var app config.AppConfig
 
 	config.Setup(&app)
-	logrusLogger := config.LogInit(app)
-	logrusLogger.Debugf("starting app with config - %v", app)
+	log.Init(app)
+	log.Debugf("starting app with config - %v", app)
 
 	// Load the Shared AWS Configuration (~/.aws/config)
 	cfg, err := awsConfig.LoadDefaultConfig(context.Background())
@@ -52,5 +53,5 @@ func main() {
 	dba.NewDBA(repo)
 
 	// Start gRPC Server
-	gRPCListen(app, aw, logrusLogger)
+	gRPCListen(app, aw)
 }

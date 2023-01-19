@@ -23,9 +23,9 @@ import (
 
 	"github.com/coinbase-samples/ib-usermgr-go/conversions"
 	"github.com/coinbase-samples/ib-usermgr-go/dba"
+	"github.com/coinbase-samples/ib-usermgr-go/log"
 	"github.com/coinbase-samples/ib-usermgr-go/model"
 	profile "github.com/coinbase-samples/ib-usermgr-go/pkg/pbs/profile/v1"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 )
 
 type ProfileServer struct {
@@ -33,48 +33,46 @@ type ProfileServer struct {
 }
 
 func (o *ProfileServer) ReadProfile(ctx context.Context, req *profile.ReadProfileRequest) (*profile.ReadProfileResponse, error) {
-	l := ctxlogrus.Extract(ctx)
 	authedUser := ctx.Value(model.UserCtxKey).(model.User)
 	if err := req.ValidateAll(); err != nil {
-		l.Debugln("invalid read profile request", err)
+		log.DebugfCtx(ctx, "invalid read profile request: %v", err)
 		return nil, fmt.Errorf("profile handler could not validate request: %w", err)
 	}
 
-	l.Debugf("fetching user - %s - %s", authedUser.Id, req.Id)
+	log.DebugfCtx(ctx, "fetching user - %s - %s", authedUser.Id, req.Id)
 	body, err := dba.Repo.ReadProfile(authedUser.Id)
 
 	if err != nil {
-		l.Debugln("error reading profile with dynamo", err)
+		log.DebugfCtx(ctx, "error reading profile with dynamo: %v", err)
 		return nil, fmt.Errorf("profile handler could not read profile: %w", err)
 	}
 
 	response := conversions.ConvertReadProfileToProto(body)
 
-	l.Debugf("returning read profile response - %v", &response)
+	log.DebugfCtx(ctx, "returning read profile response - %v", &response)
 	return &response, nil
 }
 
 func (o *ProfileServer) UpdateProfile(ctx context.Context, req *profile.UpdateProfileRequest) (*profile.UpdateProfileResponse, error) {
-	l := ctxlogrus.Extract(ctx)
 	authedUser := ctx.Value(model.UserCtxKey).(model.User)
 	if err := req.ValidateAll(); err != nil {
-		l.Debugln("invalid update profile request", err)
+		log.DebugfCtx(ctx, "invalid update profile request: %v", err)
 		return nil, fmt.Errorf("profile handler could not validate request: %w", err)
 	}
 
 	updateBody := conversions.ConvertUpdateProfileToModel(req)
 
-	l.Debugln("updating user", authedUser.Id, req.Id)
+	log.DebugfCtx(ctx, "updating user: %s - %s", authedUser.Id, req.Id)
 	body, err := dba.Repo.UpdateProfile(authedUser.Id, updateBody)
 
 	if err != nil {
-		l.Debugln("error updating profile with dynamo", err)
+		log.DebugfCtx(ctx, "error updating profile with dynamo", err)
 		return nil, fmt.Errorf("profile handler could not update profile: %w", err)
 	}
 
 	response := conversions.ConvertUpdateProfileToProto(body)
 
-	l.Debugf("returning update profile response - %v", &response)
+	log.DebugfCtx(ctx, "returning update profile response - %v", &response)
 	return &response, nil
 }
 

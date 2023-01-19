@@ -29,13 +29,13 @@ import (
 	"github.com/coinbase-samples/ib-usermgr-go/auth"
 	"github.com/coinbase-samples/ib-usermgr-go/config"
 	"github.com/coinbase-samples/ib-usermgr-go/handlers"
+	"github.com/coinbase-samples/ib-usermgr-go/log"
 	v1 "github.com/coinbase-samples/ib-usermgr-go/pkg/pbs/profile/v1"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health"
@@ -43,7 +43,7 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-func gRPCListen(app config.AppConfig, aw auth.Middleware, l *log.Entry) {
+func gRPCListen(app config.AppConfig, aw auth.Middleware) {
 
 	// if local expose both grpc and http endpoints
 	activePort := app.Port
@@ -54,10 +54,10 @@ func gRPCListen(app config.AppConfig, aw auth.Middleware, l *log.Entry) {
 	//setup conn
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", activePort))
 	if err != nil {
-		l.Fatalf("Failed to listen for gRPC: %v", err)
+		log.Fatalf("Failed to listen for gRPC: %v", err)
 	}
 
-	grpcOptions := setupGrpcOptions(app, aw, l)
+	grpcOptions := setupGrpcOptions(app, aw)
 	s := grpc.NewServer(grpcOptions...)
 
 	//register grpc handlers
@@ -65,7 +65,7 @@ func gRPCListen(app config.AppConfig, aw auth.Middleware, l *log.Entry) {
 	registerHealth(s)
 	reflection.Register(s)
 
-	l.Debugf("gRPC Server starting on port %s\n", activePort)
+	log.Debugf("gRPC Server starting on port %s\n", activePort)
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("Failed to listen for gRPC: %v", err)
@@ -75,9 +75,9 @@ func gRPCListen(app config.AppConfig, aw auth.Middleware, l *log.Entry) {
 	//if local, start http as an interface
 	var gwServer *http.Server
 	if app.IsLocalEnv() {
-		gwServer, err = setupHttp(app, s, l)
+		gwServer, err = setupHttp(app, s)
 		if err != nil {
-			l.Errorln("issues setting up http server", err)
+			log.Errorf("issues setting up http server: %v", err)
 		}
 	}
 
@@ -96,7 +96,7 @@ func gRPCListen(app config.AppConfig, aw auth.Middleware, l *log.Entry) {
 	// Optionally, you could run srv.Shutdown in a goroutine and block on
 	// <-ctx.Done() if your application should wait for other services
 	// to finalize based on context cancellation.
-	l.Debugln("stopping")
+	log.Debug("stopping")
 	os.Exit(0)
 }
 
@@ -106,7 +106,7 @@ func registerHealth(s *grpc.Server) {
 	grpc_health_v1.RegisterHealthServer(s, healthServer)
 }
 
-func setupGrpcOptions(app config.AppConfig, aw auth.Middleware, l *log.Entry) []grpc.ServerOption {
+func setupGrpcOptions(app config.AppConfig, aw auth.Middleware) []grpc.ServerOption {
 	// Logrus entry is used, allowing pre-definition of certain fields by the user.
 	// See example setup here https://github.com/grpc-ecosystem/go-grpc-middleware/blob/master/logging/logrus/examples_test.go
 	opts := []grpc_logrus.Option{
@@ -124,10 +124,12 @@ func setupGrpcOptions(app config.AppConfig, aw auth.Middleware, l *log.Entry) []
 		}),
 	}
 
+	entry := log.NewEntry()
+
 	grpcOptions := []grpc.ServerOption{
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_ctxtags.UnaryServerInterceptor(),
-			grpc_logrus.UnaryServerInterceptor(l, opts...),
+			grpc_logrus.UnaryServerInterceptor(entry.GetUnderneath(), opts...),
 			aw.InterceptorNew(),
 			grpc_validator.UnaryServerInterceptor(),
 			grpc_recovery.UnaryServerInterceptor(),
@@ -138,7 +140,7 @@ func setupGrpcOptions(app config.AppConfig, aw auth.Middleware, l *log.Entry) []
 		// load tls for grpc
 		tlsCredentials, err := loadCredentials()
 		if err != nil {
-			l.Fatalf("Cannot load TLS credentials: %v", err)
+			log.Fatalf("Cannot load TLS credentials: %v", err)
 		}
 
 		grpcOptions = append(grpcOptions, grpc.Creds(tlsCredentials))

@@ -24,10 +24,10 @@ import (
 	"time"
 
 	"github.com/coinbase-samples/ib-usermgr-go/config"
+	"github.com/coinbase-samples/ib-usermgr-go/log"
 	v1 "github.com/coinbase-samples/ib-usermgr-go/pkg/pbs/profile/v1"
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -40,9 +40,9 @@ func getProfileConnAddress(app config.AppConfig) string {
 	return fmt.Sprintf("%s:%s", "api-internal-dev.neoworks.xyz", app.GrpcPort)
 }
 
-func profileConn(app config.AppConfig, logrusLogger *log.Entry) (*grpc.ClientConn, error) {
+func profileConn(app config.AppConfig) (*grpc.ClientConn, error) {
 	dialProfileConn := getProfileConnAddress(app)
-	logrusLogger.Debugln("connecting to profile localhost grpc", dialProfileConn)
+	log.Debugf("connecting to profile localhost grpc: %s", dialProfileConn)
 	// Create a client connection to the gRPC server we just started
 	// This is where the gRPC-Gateway proxies the requests
 	conn, err := grpc.DialContext(
@@ -54,13 +54,13 @@ func profileConn(app config.AppConfig, logrusLogger *log.Entry) (*grpc.ClientCon
 	return conn, err
 }
 
-func setupHttp(app config.AppConfig, grpcServer *grpc.Server, logrusLogger *log.Entry) (*http.Server, error) {
-	logrusLogger.Debugln("dialing profile")
-	pConn, err := profileConn(app, logrusLogger)
+func setupHttp(app config.AppConfig, grpcServer *grpc.Server) (*http.Server, error) {
+	log.Debug("dialing profile")
+	pConn, err := profileConn(app)
 	if err != nil {
-		logrusLogger.Fatalln("Failed to dial server:", err)
+		log.Fatalf("Failed to dial server: %v", err)
 	}
-	logrusLogger.Debugln("Connected to profile")
+	log.Debug("Connected to profile")
 
 	gwmux := runtime.NewServeMux(runtime.WithMetadata(func(ctx context.Context, r *http.Request) metadata.MD {
 		md := make(map[string]string)
@@ -74,7 +74,7 @@ func setupHttp(app config.AppConfig, grpcServer *grpc.Server, logrusLogger *log.
 	}))
 
 	gwmux.HandlePath("GET", "/health", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
-		logrusLogger.Debugln("responding to health check")
+		log.Debug("responding to health check")
 		w.WriteHeader(http.StatusOK)
 		io.WriteString(w, "ok\n")
 	})
@@ -83,7 +83,7 @@ func setupHttp(app config.AppConfig, grpcServer *grpc.Server, logrusLogger *log.
 	err = v1.RegisterProfileServiceHandler(context.Background(), gwmux, pConn)
 
 	if err != nil {
-		logrusLogger.Fatalln("Failed to register profile:", err)
+		log.Fatalf("Failed to register profile: %v", err)
 	}
 
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
@@ -98,7 +98,7 @@ func setupHttp(app config.AppConfig, grpcServer *grpc.Server, logrusLogger *log.
 	})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
-	logrusLogger.Debugf("starting http - %v - %v - %v", originsOk, headersOk, methodsOk)
+	log.Debugf("starting http - %v - %v - %v", originsOk, headersOk, methodsOk)
 	gwServer := &http.Server{
 		Handler:      handlers.CORS(originsOk, headersOk, methodsOk)(gwmux),
 		Addr:         fmt.Sprintf(":%s", app.Port),
@@ -106,19 +106,19 @@ func setupHttp(app config.AppConfig, grpcServer *grpc.Server, logrusLogger *log.
 		ReadTimeout:  40 * time.Second,
 	}
 
-	logrusLogger.Debugf("started http gRPC-Gateway on - %v", app.Port)
+	log.Debugf("started http gRPC-Gateway on - %v", app.Port)
 
 	go func() {
 		if app.Env == "local" {
 			if err := gwServer.ListenAndServe(); err != nil {
-				logrusLogger.Fatalln("ListenAndServe: ", err)
+				log.Fatalf("ListenAndServe: %v", err)
 			}
-			logrusLogger.Debugf("started http")
+			log.Debugf("started http")
 		} else {
 			if err := gwServer.ListenAndServeTLS("server.crt", "server.key"); err != nil {
-				logrusLogger.Fatalln("ListenAndServeTLS: ", err)
+				log.Fatalf("ListenAndServeTLS: %v", err)
 			}
-			logrusLogger.Debugf("started https")
+			log.Debugf("started https")
 		}
 	}()
 
