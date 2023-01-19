@@ -41,7 +41,7 @@ func main() {
 	// Load the Shared AWS Configuration (~/.aws/config)
 	cfg, err := awsConfig.LoadDefaultConfig(context.Background())
 	if err != nil {
-		panic(err)
+		log.Fatalf("cannot read aws config: %v", err)
 	}
 
 	// Setup cognito client

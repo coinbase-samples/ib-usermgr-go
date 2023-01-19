@@ -41,10 +41,11 @@ func UnmarshalBase(b *BaseConfig) {
 
 type AppConfig struct {
 	BaseConfig
-	ClientId         string `mapstructure:"COGNITO_APP_CLIENT_ID"`
-	UserPoolId       string `mapstructure:"COGNITO_USER_POOL_ID"`
-	DatabaseEndpoint string `mapstructure:"DB_ENDPOINT"`
-	ProfileTableName string `mapstructure:"PROFILE_TABLE"`
+	ClientId            string `mapstructure:"COGNITO_APP_CLIENT_ID"`
+	UserPoolId          string `mapstructure:"COGNITO_USER_POOL_ID"`
+	DatabaseEndpoint    string `mapstructure:"DB_ENDPOINT"`
+	ProfileTableName    string `mapstructure:"PROFILE_TABLE"`
+	InternalApiHostname string `mapstructure:"INTERNAL_API_HOSTNAME"`
 }
 
 func (a AppConfig) IsLocalEnv() bool {
@@ -71,6 +72,7 @@ func Setup(app *AppConfig) {
 	viper.SetDefault("COGNITO_USER_POOL_ID", "local")
 	viper.SetDefault("DB_ENDPOINT", "http://localhost:4566")
 	viper.SetDefault("PROFILE_TABLE", "Profile")
+	viper.SetDefault("INTERNAL_API_HOSTNAME", "api-internal-dev.neoworks.xyz")
 
 	err := viper.ReadInConfig()
 	if err != nil {

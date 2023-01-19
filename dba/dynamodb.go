@@ -59,8 +59,7 @@ func NewDBA(r *DynamoRepository) {
 	Repo = r
 }
 
-func setupService(app *config.AppConfig, cfg awsConfig.Config) *dynamodb.Client {
-	var svc *dynamodb.Client
+func setupService(app *config.AppConfig, cfg awsConfig.Config) (svc *dynamodb.Client) {
 
 	if app.IsLocalEnv() {
 		svc = dynamodb.NewFromConfig(cfg, func(o *dynamodb.Options) {

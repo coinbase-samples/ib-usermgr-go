@@ -37,7 +37,7 @@ func getProfileConnAddress(app config.AppConfig) string {
 	if app.IsLocalEnv() {
 		return fmt.Sprintf("%s:%s", "0.0.0.0", app.GrpcPort)
 	}
-	return fmt.Sprintf("%s:%s", "api-internal-dev.neoworks.xyz", app.GrpcPort)
+	return fmt.Sprintf("%s:%s", app.InternalApiHostname, app.GrpcPort)
 }
 
 func profileConn(app config.AppConfig) (*grpc.ClientConn, error) {
@@ -86,21 +86,8 @@ func setupHttp(app config.AppConfig, grpcServer *grpc.Server) (*http.Server, err
 		log.Fatalf("Failed to register profile: %v", err)
 	}
 
-	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
-	originsOk := handlers.AllowedOrigins([]string{
-		"https://api.neoworks.xyz",
-		"https://dev.neoworks.xyz",
-		"https://api-dev.neoworks.xyz",
-		fmt.Sprintf("https://localhost:%s", app.Port),
-		fmt.Sprintf("http://localhost:%s", app.Port),
-		"http://localhost:4200",
-		"https://localhost:4200",
-	})
-	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
-
-	log.Debugf("starting http - %v - %v - %v", originsOk, headersOk, methodsOk)
 	gwServer := &http.Server{
-		Handler:      handlers.CORS(originsOk, headersOk, methodsOk)(gwmux),
+		Handler:      makeHttpHandler(gwmux, app),
 		Addr:         fmt.Sprintf(":%s", app.Port),
 		WriteTimeout: 40 * time.Second,
 		ReadTimeout:  40 * time.Second,
@@ -123,4 +110,20 @@ func setupHttp(app config.AppConfig, grpcServer *grpc.Server) (*http.Server, err
 	}()
 
 	return gwServer, nil
+}
+
+func makeHttpHandler(gwmux http.Handler, app config.AppConfig) http.Handler {
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+	origins := []string{
+		fmt.Sprintf("https://localhost:%s", app.Port),
+		fmt.Sprintf("http://localhost:%s", app.Port),
+		"http://localhost:4200",
+		"https://localhost:4200",
+	}
+
+	originsOk := handlers.AllowedOrigins(origins)
+
+	log.Debugf("starting http - %v - %v - %v", originsOk, headersOk, methodsOk)
+	return handlers.CORS(originsOk, headersOk, methodsOk)(gwmux)
 }
