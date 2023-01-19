@@ -15,7 +15,7 @@ docker-local-start:
 
 docker-setup:
 	@docker compose up -d \
-	&& @sleep 20 \
+	&& sleep 20 \
 	&& ./setupDynamo.sh 
 
 seed-db:
