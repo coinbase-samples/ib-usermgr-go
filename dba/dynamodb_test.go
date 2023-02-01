@@ -35,7 +35,7 @@ func TestSetup(t *testing.T) {
 
 	dr := NewRepo(&app, cfg)
 
-	if dr.App.Env != "local" {
+	if dr.App.IsLocalEnv() {
 		t.Fatal("did not correctly set config")
 	}
 

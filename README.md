@@ -4,7 +4,7 @@ This is the application code for the User Manager implementation.
 
 This application is the simplest example of having a grpc-gateway service that can read/write to dynamodb.
 
-The service is authenticated behind AWS Cognito
+The service is authenticated by AWS Cognito
 
 ### Local Environment Setup
 

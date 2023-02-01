@@ -48,7 +48,6 @@ func profileConn(app config.AppConfig) (*grpc.ClientConn, error) {
 	conn, err := grpc.DialContext(
 		context.Background(),
 		dialProfileConn,
-		//grpc.WithBlock(),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	return conn, err

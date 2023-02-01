@@ -41,8 +41,7 @@ func (m *DynamoRepository) ReadProfile(id string) (model.ProfileResponse, error)
 		return profile, fmt.Errorf("dynamodb could not getItem: %w", err)
 	}
 
-	err = attributevalue.UnmarshalMap(out.Item, &profile)
-	if err != nil {
+	if err = attributevalue.UnmarshalMap(out.Item, &profile); err != nil {
 		return profile, fmt.Errorf("could not unmarshal item: %w", err)
 	}
 

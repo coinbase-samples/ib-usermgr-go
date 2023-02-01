@@ -72,7 +72,7 @@ func Setup(app *AppConfig) {
 	viper.SetDefault("COGNITO_USER_POOL_ID", "local")
 	viper.SetDefault("DB_ENDPOINT", "http://localhost:4566")
 	viper.SetDefault("PROFILE_TABLE", "Profile")
-	viper.SetDefault("INTERNAL_API_HOSTNAME", "api-internal-dev.neoworks.xyz")
+	viper.SetDefault("INTERNAL_API_HOSTNAME", "NOT_SET")
 
 	err := viper.ReadInConfig()
 	if err != nil {
