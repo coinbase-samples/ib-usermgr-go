@@ -33,15 +33,8 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func getProfileConnAddress(app config.AppConfig) string {
-	if app.IsLocalEnv() {
-		return fmt.Sprintf("%s:%s", "0.0.0.0", app.GrpcPort)
-	}
-	return fmt.Sprintf("%s:%s", app.InternalApiHostname, app.GrpcPort)
-}
-
 func profileConn(app config.AppConfig) (*grpc.ClientConn, error) {
-	dialProfileConn := getProfileConnAddress(app)
+	dialProfileConn := app.GetProfileConnAddress()
 	log.Debugf("connecting to profile localhost grpc: %s", dialProfileConn)
 	// Create a client connection to the gRPC server we just started
 	// This is where the gRPC-Gateway proxies the requests
@@ -79,9 +72,7 @@ func setupHttp(app config.AppConfig, grpcServer *grpc.Server) (*http.Server, err
 	})
 
 	// Register Service Handlers
-	err = v1.RegisterProfileServiceHandler(context.Background(), gwmux, pConn)
-
-	if err != nil {
+	if err := v1.RegisterProfileServiceHandler(context.Background(), gwmux, pConn); err != nil {
 		log.Fatalf("Failed to register profile: %v", err)
 	}
 

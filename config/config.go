@@ -52,6 +52,13 @@ func (a AppConfig) IsLocalEnv() bool {
 	return a.Env == "local"
 }
 
+func (a AppConfig) GetProfileConnAddress() string {
+	if a.IsLocalEnv() {
+		return fmt.Sprintf("%s:%s", "0.0.0.0", a.GrpcPort)
+	}
+	return fmt.Sprintf("%s:%s", a.InternalApiHostname, a.GrpcPort)
+}
+
 func Setup(app *AppConfig) {
 	viper.AddConfigPath(".")
 	viper.SetConfigName(".env")
