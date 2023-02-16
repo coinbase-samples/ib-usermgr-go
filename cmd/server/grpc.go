@@ -57,15 +57,14 @@ func gRPCListen(app config.AppConfig, aw auth.Middleware) {
 		log.Fatalf("Failed to listen for gRPC: %v", err)
 	}
 
-	grpcOptions := setupGrpcOptions(app, aw)
-	s := grpc.NewServer(grpcOptions...)
+	s := grpc.NewServer(setupGrpcOptions(app, aw)...)
 
 	//register grpc handlers
 	v1.RegisterProfileServiceServer(s, &handlers.ProfileServer{})
 	registerHealth(s)
 	reflection.Register(s)
 
-	log.Debugf("gRPC Server starting on port %s\n", activePort)
+	log.Infof("gRPC Server starting on port %s\n", activePort)
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("Failed to listen for gRPC: %v", err)
@@ -92,12 +91,6 @@ func gRPCListen(app config.AppConfig, aw auth.Middleware) {
 	if gwServer != nil {
 		gwServer.Shutdown(ctx)
 	}
-
-	// Optionally, you could run srv.Shutdown in a goroutine and block on
-	// <-ctx.Done() if your application should wait for other services
-	// to finalize based on context cancellation.
-	log.Debug("stopping")
-	os.Exit(0)
 }
 
 func registerHealth(s *grpc.Server) {
@@ -124,12 +117,10 @@ func setupGrpcOptions(app config.AppConfig, aw auth.Middleware) []grpc.ServerOpt
 		}),
 	}
 
-	entry := log.NewEntry()
-
 	grpcOptions := []grpc.ServerOption{
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_ctxtags.UnaryServerInterceptor(),
-			grpc_logrus.UnaryServerInterceptor(entry.GetUnderneath(), opts...),
+			grpc_logrus.UnaryServerInterceptor(log.NewEntry().GetUnderneath(), opts...),
 			aw.InterceptorNew(),
 			grpc_validator.UnaryServerInterceptor(),
 			grpc_recovery.UnaryServerInterceptor(),

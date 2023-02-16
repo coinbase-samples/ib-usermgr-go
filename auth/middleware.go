@@ -74,6 +74,6 @@ func addUserToContext(ctx context.Context, user *cognitoidentityprovider.GetUser
 			authedUser.Email = *attr.Value
 		}
 	}
-	l.Debugf("adding user to context: %v", authedUser)
+	l.Debugf("adding user to context: %v", authedUser.Id)
 	return context.WithValue(ctx, model.UserCtxKey, authedUser)
 }
