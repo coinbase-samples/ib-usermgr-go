@@ -36,7 +36,6 @@ func main() {
 
 	config.Setup(&app)
 	log.Init(app)
-	log.Debugf("starting app with config - %v", app)
 
 	// Load the Shared AWS Configuration (~/.aws/config)
 	cfg, err := awsConfig.LoadDefaultConfig(context.Background())

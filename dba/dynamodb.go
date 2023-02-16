@@ -69,5 +69,5 @@ func setupService(app *config.AppConfig, cfg awsConfig.Config) (svc *dynamodb.Cl
 		svc = dynamodb.NewFromConfig(cfg)
 	}
 
-	return svc
+	return
 }

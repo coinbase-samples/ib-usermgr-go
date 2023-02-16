@@ -79,8 +79,7 @@ func Setup(app *AppConfig) {
 		fmt.Printf("Missing env file %v\n", err)
 	}
 
-	err = viper.Unmarshal(&app)
-	if err != nil {
+	if err = viper.Unmarshal(&app); err != nil {
 		fmt.Printf("Cannot parse env file %v\n", err)
 	}
 	UnmarshalBase(&app.BaseConfig)

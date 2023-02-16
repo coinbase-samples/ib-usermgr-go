@@ -35,7 +35,6 @@ type ProfileServer struct {
 func (o *ProfileServer) ReadProfile(ctx context.Context, req *profile.ReadProfileRequest) (*profile.ReadProfileResponse, error) {
 	authedUser := ctx.Value(model.UserCtxKey).(model.User)
 	if err := req.ValidateAll(); err != nil {
-		log.DebugfCtx(ctx, "invalid read profile request: %v", err)
 		return nil, fmt.Errorf("profile handler could not validate request: %w", err)
 	}
 
@@ -43,7 +42,6 @@ func (o *ProfileServer) ReadProfile(ctx context.Context, req *profile.ReadProfil
 	body, err := dba.Repo.ReadProfile(authedUser.Id)
 
 	if err != nil {
-		log.DebugfCtx(ctx, "error reading profile with dynamo: %v", err)
 		return nil, fmt.Errorf("profile handler could not read profile: %w", err)
 	}
 
@@ -56,7 +54,6 @@ func (o *ProfileServer) ReadProfile(ctx context.Context, req *profile.ReadProfil
 func (o *ProfileServer) UpdateProfile(ctx context.Context, req *profile.UpdateProfileRequest) (*profile.UpdateProfileResponse, error) {
 	authedUser := ctx.Value(model.UserCtxKey).(model.User)
 	if err := req.ValidateAll(); err != nil {
-		log.DebugfCtx(ctx, "invalid update profile request: %v", err)
 		return nil, fmt.Errorf("profile handler could not validate request: %w", err)
 	}
 
@@ -66,7 +63,6 @@ func (o *ProfileServer) UpdateProfile(ctx context.Context, req *profile.UpdatePr
 	body, err := dba.Repo.UpdateProfile(authedUser.Id, updateBody)
 
 	if err != nil {
-		log.DebugfCtx(ctx, "error updating profile with dynamo", err)
 		return nil, fmt.Errorf("profile handler could not update profile: %w", err)
 	}
 

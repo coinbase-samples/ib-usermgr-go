@@ -92,10 +92,10 @@ func setupHttp(app config.AppConfig, grpcServer *grpc.Server) (*http.Server, err
 		ReadTimeout:  40 * time.Second,
 	}
 
-	log.Debugf("started http gRPC-Gateway on - %v", app.Port)
+	log.Debugf("started http gRPC-Gateway on - %s", app.Port)
 
 	go func() {
-		if app.Env == "local" {
+		if app.IsLocalEnv() {
 			if err := gwServer.ListenAndServe(); err != nil {
 				log.Fatalf("ListenAndServe: %v", err)
 			}
