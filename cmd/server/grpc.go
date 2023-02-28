@@ -64,7 +64,7 @@ func gRPCListen(app config.AppConfig, aw auth.Middleware) {
 	registerHealth(s)
 	reflection.Register(s)
 
-	log.Infof("gRPC Server starting on port %s\n", activePort)
+	log.Infof("gRPC Server starting on port %s", activePort)
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("Failed to listen for gRPC: %v", err)

@@ -47,7 +47,6 @@ func (am *Middleware) InterceptorNew() grpc.UnaryServerInterceptor {
 
 		token, err := grpc_auth.AuthFromMD(ctx, "bearer")
 		if err != nil {
-			l.Debugf("no bearer token in metadata - %v", err)
 			return nil, fmt.Errorf("could not find bearer token from metadata: %w", err)
 		}
 
@@ -72,6 +71,6 @@ func addUserToContext(ctx context.Context, user *cognitoidentityprovider.GetUser
 			authedUser.Email = *attr.Value
 		}
 	}
-	l.Debugf("adding user to context: %v", authedUser.Id)
+	l.Debugf("adding user to context: %s", authedUser.Id)
 	return context.WithValue(ctx, model.UserCtxKey, authedUser)
 }
